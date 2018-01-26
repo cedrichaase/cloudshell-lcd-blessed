@@ -1,21 +1,9 @@
 import { DataProvider } from "./src/data-provider";
+import {heatMap, labelbar} from "./src/visualization";
 
 const blessed = require('blessed');
 
 (async function main() {
-
-
-    function getStyle(fg, bg) {
-        return {
-            fg: fg,
-            bg: bg,
-            border: {
-                fg: bg,
-                bg: bg
-            }
-        }
-    }
-
     const provider = new DataProvider();
 
     // Create a screen object.
@@ -36,18 +24,62 @@ const blessed = require('blessed');
         border: {
             type: 'bg'
         },
-        style: getStyle('white', 'blue')
+        style: {
+            fg: 'white',
+            bg: 'purple',
+            border: {
+                bg: 'black'
+            }
+        }
+    });
+
+    const tempSet = labelbar({
+        parent: box,
+        label: 'temp',
+        value: 0,
+        unit: 'C',
+        useHeatMap: true,
+        bottom: 0
+    });
+
+    const memSet = labelbar({
+        parent: box,
+        label: 'mem',
+        value: 0,
+        unit: '%',
+        useHeatMap: true,
+        bottom: 2
+    });
+
+    const cpuSet = labelbar({
+        parent: box,
+        label: 'cpu',
+        value: 0,
+        unit: '%',
+        useHeatMap: true,
+        bottom: 4
+    });
+
+    const fsSet = labelbar({
+        parent: box,
+        label: 'btrfs',
+        value: 0,
+        unit: '%',
+        useHeatMap: true,
+        bottom: 6
     });
 
     // Append our box to the screen.
     theScreen.append(box);
 
     provider.on('data', function(data) {
+        box.setContent(`{bold}{red-fg}${data.hostname || ''}{/}`);
 
-        box.setContent(
-`{bold}cpu{/bold} ${data.cpu || 0}%
-{bold}/mnt/vault{/bold} ${data.fsUsage ? data.fsUsage.usedPercent : '?'}
-{bold}temp{/bold} ${data.temp || 0}°C`);
+        cpuSet.updateValue(Math.round(data.cpu) || 0);
+        tempSet.updateValue(data.temp || 0);
+        fsSet.updateValue(data.fsUsage ? data.fsUsage.usedPercent : 0);
+        memSet.updateValue(data.mem || 0);
+
         theScreen.render();
     });
 

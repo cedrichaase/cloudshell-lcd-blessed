@@ -24,7 +24,7 @@ const df = async (mountpoint) => {
         size: matches[1],
         used: matches[2],
         available: matches[3],
-        usedPercent: matches[4],
+        usedPercent: parseInt(matches[4].replace('%', '')),
         mountedOn: matches[5]
     };
 };
@@ -38,15 +38,35 @@ const cpu = async () => {
     return (100 - parseFloat(matches.slice(-1))).toFixed(2);
 };
 
+let mem = async () => {
+    const text = await runCmd('cat', ['/proc/meminfo']);
+    const lines = text.split('\n');
+    const totalLine = lines.find(l => l.includes('MemTotal'));
+    const availLine = lines.find(l => l.includes('MemAvailable'));
+
+    const total = parseInt(totalLine.match(/\S+/gi)[1]);
+    const avail = parseInt(availLine.match(/\S+/gi)[1]);
+
+    const used = total - avail;
+
+    return Math.round((used / total) * 100);
+};
+
 const temp = async () => {
     const text = await runCmd('cat', ['/sys/class/thermal/thermal_zone0/temp']);
     return parseInt(text) / 1000;
+};
+
+const hostname = async() => {
+    return (await runCmd('uname', ['-n', '-r']));
 };
 
 export class DataProvider extends EventEmitter {
     private cpuTimer;
     private fsUsageTimer;
     private tempTimer;
+    private hostnameTimer;
+    private memTimer;
 
     private publishTimer;
 
@@ -65,6 +85,14 @@ export class DataProvider extends EventEmitter {
 
         this.tempTimer = setInterval(async () => {
             this.data.temp = await temp();
+        }, 1000);
+
+        this.hostnameTimer = setInterval(async () => {
+            this.data.hostname = await hostname();
+        }, 1000);
+
+        this.memTimer = setInterval(async () => {
+            this.data.mem = await mem();
         }, 1000);
 
         this.publishTimer = setInterval(() => {
