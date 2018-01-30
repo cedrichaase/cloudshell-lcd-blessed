@@ -100,10 +100,3 @@ export class DataProvider extends EventEmitter {
         }, 1000);
     }
 }
-
-
-//
-// (async function main() {
-//     console.log(await df('/mnt/vault'));
-//     console.log(await cpu());
-// })();
