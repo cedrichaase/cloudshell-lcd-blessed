@@ -46,7 +46,7 @@ WantedBy=multi-user.target
 Substitute the dummy paths for actual paths of the `node` executable and `app.js`
 and save the contents to `/etc/systemd/system/cloudshell-lcd-blessed.service`.
 
-##Usage
+## Usage
 
 After bootup, start the service *manually* by executing
 ```bash
